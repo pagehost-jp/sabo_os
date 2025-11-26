@@ -18,6 +18,7 @@ function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('task');
   const [updateTrigger, setUpdateTrigger] = useState(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 認証状態の監視
   useEffect(() => {
@@ -61,9 +62,6 @@ function App() {
       </div>
     );
   }
-
-  // ログインモーダルの表示制御
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   return (
     <div className="app">
