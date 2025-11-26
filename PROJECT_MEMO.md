@@ -1,200 +1,256 @@
-# SABO OS 1.0 - 開発メモ
+# SABO OS 2.0 - 開発メモ
 
-## 📋 プロジェクト概要
+## 📝 プロジェクト概要
 
-**SABO OS 1.0** - サボ専用の「脳OS」
+**サボさん専用の脳OS（タスク管理アプリ）**
 
-サボが思いついたことを投げるだけで、アプリが自動で整理・分類・タスク化してくれるシステム。
+思いついたことを投げると、Gemini AIが自動で分類・要約してくれるタスク管理システム。
+直感的なスワイプ操作で「今日やること」にタスクを移動できる、感覚的に使えるWebアプリ。
 
----
-
-## ✅ 完成した機能（時系列）
-
-### 2025-11-26 初期実装
-
-#### データ層
-- ✅ 型定義ファイル作成（`src/types/index.ts`）
-  - `SaboItem` インターフェース
-  - `Category`, `Status`, `Scope` 型定義
-
-- ✅ 自動分類ロジック実装（`src/services/classifier.ts`）
-  - カテゴリ判定: task / idea / emotion / life / system / other
-  - 時間範囲判定: today / this_week / someday
-  - サマリー生成（簡易版）
-  - `createSaboItem()` 関数で完全なアイテム生成
-
-- ✅ データサービス実装（`src/services/dataService.ts`）
-  - localStorage でのCRUD操作
-  - `getTodayTask()` - 優先順位付きタスク取得
-  - `completeTask()` / `deferTask()` - タスク操作
-
-#### UI層
-- ✅ 入力画面（`CaptureView.tsx`）
-  - シンプルなテキストエリア
-  - 自動分類＋保存
-  - 送信後クリア
-
-- ✅ 今日の1タスク画面（`SingleTaskView.tsx`）★メイン画面
-  - 1件だけ大きく表示
-  - 完了 / あとで ボタン
-  - タスクなし時の表示
-
-- ✅ リスト画面（`ListView.tsx`）
-  - すべて / タスク / 完了 フィルタ
-  - カテゴリ別絵文字表示
-  - 元テキストとサマリーの両方表示
-
-- ✅ メインアプリ（`App.tsx`）
-  - 3画面の切り替え
-  - グラデーションヘッダー
-  - レスポンシブ対応
-
-#### スタイル
-- ✅ グローバルスタイル（`index.css`）
-- ✅ コンポーネント別CSS
-- ✅ モバイル優先デザイン
-
-#### ドキュメント
-- ✅ README.md 作成
-- ✅ PROJECT_MEMO.md 作成（このファイル）
+- **技術スタック**: React 19 + TypeScript + Vite
+- **AI連携**: Gemini API (gemini-2.5-flash)
+- **データ保存**: localStorage
+- **リポジトリ**: https://github.com/pagehost-jp/sabo_os
 
 ---
 
-## 🐛 解決した問題
+## ✅ 完成した機能
 
-### 問題1: ファイル書き込みエラー
-**状況**: 既存ファイルを読まずにWriteツールを使用
-**原因**: Writeツールは既読ファイルのみ編集可能
-**解決**: Readツールで読み込んでからEditツールで編集
+### 1. AI自動分類・要約機能（Gemini API連携）
+- 入力テキストを7カテゴリに自動分類（work, idea, life, emotion, mind, system, other）
+- AIが10〜20文字の短い要約を生成（summaryとしてタイトル表示）
+- 時間範囲（today, this_week, someday）を自動判定
+- 404エラー時の自動リトライ機能（利用可能なモデルを自動探索）
 
-### 問題2: デフォルトREADME上書き
-**状況**: ViteのデフォルトREADMEが存在
-**原因**: Vite生成時に自動作成される
-**解決**: Editツールで全体を置き換え
+### 2. APIキー管理
+- localStorage でAPIキーを安全に管理
+- .env不要、ブラウザのUIから直接設定可能
+- APIキー未設定時はルールベース分類にフォールバック
 
----
+### 3. スワイプジェスチャー
+- タスクを左にスワイプ（100px以上）で「今日やる」に移動
+- 緑色の背景で視覚的フィードバック
+- スマホ操作に最適化
 
-## 📝 使い方
+### 4. ListView機能
+- 最新順ソート（新しいタスクが一番上）
+- フィルター機能（すべて / タスク / 完了）
+- 削除機能（確認ダイアログ付き）
+- 未完了に戻す機能
+- 作成日時・完了日時の表示（例: 11/26 14:30）
+- 「今日やる」ボタン（スワイプ不可の環境用）
 
-### 開発者向け
-```bash
-# セットアップ
-npm install
+### 5. SingleTaskView（今日やること画面）
+- 今日やるタスクを1件だけ表示（フォーカス）
+- 完了/後回しボタン
+- 優先順位: today → this_week → someday
 
-# 開発サーバー起動
-npm run dev
-
-# ビルド
-npm run build
-```
-
-### ユーザー向け
-
-1. **入力画面** - 思いついたことを入力
-   - テキストエリアに入力
-   - 送信ボタンを押す
-   - カテゴリ分類は自動
-
-2. **今日やること画面** - メイン画面
-   - 1つだけタスクが表示される
-   - 完了 → 次のタスクへ
-   - あとで → 優先度を下げる
-
-3. **リスト画面** - 振り返り用
-   - 全アイテムを一覧
-   - フィルタで絞り込み
-   - デバッグ・確認用
+### 6. CaptureView（入力画面）
+- AI解析中の状態表示（🔄 AI解析中...）
+- APIキー設定UI（トグル式）
+- ルールベース分類時の警告表示
 
 ---
 
-## 🔄 次にやること（TODO）
+## 🔧 解決した問題と原因
 
-### v1.0 完成まで
-- [ ] アプリ起動確認
-- [ ] Git初期化・GitHub公開
-- [ ] 実際のデータでテスト
-  - タスク入力
-  - アイデア入力
-  - 感情入力
-- [ ] バグ修正
+### 問題1: Gemini APIが404エラー
+**原因**: モデル名 `gemini-pro` が古く、API v1beta では利用不可だった
 
-### v1.1以降の改善案
-- [ ] タスク優先度の視覚化
-- [ ] 完了タスク数の表示
-- [ ] データエクスポート機能
-- [ ] ダークモード対応
+**解決策**:
+1. Google AI Studio の公式サンプルコードを確認
+2. 最新モデル名 `gemini-2.5-flash` に変更
+3. 404エラー時の自動リトライ機能を実装（既知のモデルを順番に試す）
 
-### v2.0以降
-- [ ] LLM API連携（GPT-4等）
-  - 高度な分類
-  - 自然な要約
-  - コンテキスト理解
-- [ ] Firebase連携
-  - クラウド同期
-  - マルチデバイス対応
-- [ ] 音声入力対応
-- [ ] リマインダー機能
-- [ ] 週次レポート
+**該当ファイル**: `src/services/geminiService.ts:19-28`
+
+### 問題2: AI要約が長すぎる（入力文と同じ）
+**原因**: Gemini へのプロンプトが曖昧で、短い要約を生成するルールが不明確だった
+
+**解決策**:
+- プロンプトに詳細なルールを追加（10〜20文字厳守）
+- 除外すべき要素を明記（時間表現、口癖、感情表現、言い訳など）
+- 具体的な変換例を3つ提示
+
+**該当ファイル**: `src/services/geminiService.ts:66-86`
+
+### 問題3: 「今日やる」への移動がボタン式で直感的でない
+**原因**: ボタンクリックだと操作が煩雑
+
+**解決策**:
+- スワイプジェスチャーを実装
+- Touch API（touchStart, touchMove, touchEnd）を使用
+- CSS transform でスムーズなアニメーション
+
+**該当ファイル**:
+- `src/components/ListView.tsx:52-76`
+- `src/components/ListView.css:49-68`
+
+### 問題4: リストが逆順（古いものが上）
+**原因**: `getFilteredItems()` でソートしていなかった
+
+**解決策**:
+- `createdAt` の降順ソートを追加
+
+**該当ファイル**: `src/components/ListView.tsx:95-97`
 
 ---
 
-## 🏗️ ファイル構成
+## 📂 ファイル構成
 
 ```
 sabo_os/
-├── README.md
-├── PROJECT_MEMO.md (このファイル)
+├── src/
+│   ├── components/
+│   │   ├── CaptureView.tsx       # 入力画面（Gemini連携、APIキー設定）
+│   │   ├── CaptureView.css
+│   │   ├── ListView.tsx          # リスト画面（スワイプ、削除、完了管理）
+│   │   ├── ListView.css
+│   │   ├── SingleTaskView.tsx    # 今日やること画面
+│   │   └── SingleTaskView.css
+│   ├── services/
+│   │   ├── geminiService.ts      # Gemini API連携（404リトライ付き）
+│   │   ├── apiKeyService.ts      # APIキー管理（localStorage）
+│   │   ├── dataService.ts        # データCRUD（localStorage）
+│   │   └── classifier.ts         # 分類ロジック（Gemini優先、ルールベースフォールバック）
+│   ├── types/
+│   │   └── index.ts              # 型定義（SaboItem, Category, Scope）
+│   ├── App.tsx                   # メインアプリ（タブ切り替え）
+│   └── main.tsx
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
-├── index.html
-├── src/
-│   ├── main.tsx              # エントリーポイント
-│   ├── App.tsx               # メインアプリ
-│   ├── App.css
-│   ├── index.css             # グローバルスタイル
-│   ├── components/
-│   │   ├── CaptureView.tsx   # 入力画面
-│   │   ├── CaptureView.css
-│   │   ├── SingleTaskView.tsx # 今日の1タスク
-│   │   ├── SingleTaskView.css
-│   │   ├── ListView.tsx      # リスト画面
-│   │   └── ListView.css
-│   ├── services/
-│   │   ├── dataService.ts    # localStorage管理
-│   │   └── classifier.ts     # 自動分類
-│   └── types/
-│       └── index.ts          # 型定義
-└── public/
+├── .env.example                  # APIキー設定例（実際は不要）
+└── PROJECT_MEMO.md               # このファイル
 ```
 
 ---
 
-## 💡 設計メモ
+## 🚀 使い方
 
-### データフロー
-1. ユーザー入力（CaptureView）
-2. 自動分類（classifier.ts）
-   - カテゴリ判定
-   - スコープ判定
-   - サマリー生成
-3. 保存（dataService.ts → localStorage）
-4. 表示（SingleTaskView / ListView）
+### 1. セットアップ
 
-### 拡張性
-- `dataService.ts` を変更するだけでFirebase等に移行可能
-- `classifier.ts` を変更するだけでLLM連携可能
-- コンポーネントは独立しているため個別改修が容易
+```bash
+cd ~/Desktop/プロジェクト/sabo_os
+npm install
+```
+
+### 2. Gemini APIキーを取得
+
+1. [Google AI Studio](https://aistudio.google.com/app/apikey) にアクセス
+2. 「Create API Key」をクリック
+3. APIキーをコピー
+
+### 3. 開発サーバー起動
+
+```bash
+npm run dev -- --port 8000
+```
+
+ブラウザで http://localhost:8000 を開く
+
+### 4. APIキーを設定
+
+1. 「💭 思いついたことを入力」タブを開く
+2. 「APIキー設定」ボタンをクリック
+3. 取得したAPIキーを貼り付けて「保存」
+
+### 5. 使ってみる
+
+- **入力**: 「明日は市役所行って書類取りに行くなあかん」
+- **AI処理**: カテゴリ自動分類 → 要約生成 → 時間範囲判定
+- **結果**:
+  - カテゴリ: life
+  - タイトル: 「市役所で書類受け取り」
+  - 範囲: today
+
+### 6. タスク管理
+
+- **今日やること**: 「📝 今日やること」タブでフォーカス
+- **スワイプ**: リストで左にスワイプ → 「今日やる」に移動
+- **完了**: チェックボタンをタップ
+- **削除**: 🗑️ ボタンをタップ
+
+### スマホからアクセス
+
+```bash
+# 同じWiFi内のデバイスからアクセス可能にする
+npm run dev -- --host --port 8000
+```
+
+表示されるネットワークアドレス（例: http://192.168.1.100:8000）にスマホでアクセス
 
 ---
 
-## 📚 参考・学び
+## 📋 次にやること候補
 
-- React + TypeScript の基本
-- localStorage API
-- CSS Grid / Flexbox レイアウト
-- コンポーネント設計
+### 優先度: 高
+- [ ] Vercel/Netlify へのデプロイ（常時アクセス可能にする）
+- [ ] PWA化（ホーム画面に追加、オフライン対応）
+- [ ] タスクの編集機能（タイトル・カテゴリ・範囲を変更）
+
+### 優先度: 中
+- [ ] タグ機能の表示（現在は保存されているが未表示）
+- [ ] 検索機能（タイトル・タグで絞り込み）
+- [ ] カテゴリ別の統計表示（週ごとの完了数など）
+- [ ] ダークモード対応
+
+### 優先度: 低
+- [ ] Firebase 連携（複数デバイス同期）
+- [ ] 通知機能（今日やることのリマインダー）
+- [ ] 音声入力対応（スマホでハンズフリー入力）
+- [ ] カレンダービュー（日付ごとの完了タスク一覧）
 
 ---
 
+## 🎨 デザイン設計
+
+### カラーパレット
+- プライマリー: `#4CAF50` (グリーン)
+- アクセント: `#667eea` (パープル、Gemini用)
+- 背景: `#f5f5f5`
+- テキスト: `#333`
+
+### Summary-as-Title 設計
+- **summary**: AIが生成した10〜20文字の要約をタイトルとして表示
+- **rawText**: 元の入力文をサブテキストとして表示
+- この設計により、AI切り替え時もUI変更不要
+
+---
+
+## 📊 現在の状態
+
+**バージョン**: 2.0
 **最終更新**: 2025-11-26
+**開発状況**: MVP完成、GitHubにプッシュ済み
+
+- ✅ Gemini API連携完了
+- ✅ スワイプジェスチャー実装完了
+- ✅ タスク管理CRUD完了
+- 🔄 デプロイ準備中
+
+---
+
+## 💡 技術メモ
+
+### Gemini API のモデル名変更対応
+モデル名は頻繁に変わるため、`KNOWN_GEMINI_MODELS` 配列で既知のモデルをリスト化。
+404エラー時は自動で代替モデルを探索し、見つかったモデル名をキャッシュする。
+
+### localStorage の使用理由
+v1.0 では手軽さ優先で localStorage を採用。
+将来的に Firebase 等へ移行可能な設計（dataService で抽象化済み）。
+
+### スワイプジェスチャーの実装
+- `touch-action: pan-y` で縦スクロールを維持
+- `user-select: none` で誤選択を防止
+- 100px 以上のスワイプでアクション発火
+
+---
+
+## 🔗 参考リンク
+
+- [Google AI Studio](https://aistudio.google.com/)
+- [Gemini API ドキュメント](https://ai.google.dev/gemini-api/docs)
+- [React 公式ドキュメント](https://react.dev/)
+- [Vite 公式ドキュメント](https://vitejs.dev/)
