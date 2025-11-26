@@ -1,39 +1,109 @@
-// SABO OS 1.0 自動分類ロジック
-// v1.0: ルールベース（将来LLM APIに置き換え可能な設計）
+// SABO OS 2.0 自動分類ロジック
+// Gemini API優先、ルールベースはフォールバック
+//
+// NOTE: summary の設計方針
+// - v1.0 では summary をローカルのロジックで生成している
+// - 将来は Gemini API に置き換える想定
+// - UI 側は「summary をタイトルとして使う」設計なので、API 切り替え時も変更不要
+// - Gemini には「1行の短い要約」を生成させ、それを summary として保存するだけでOK
 
-import { Category, Scope, SaboItem } from '../types';
+import type { Category, Scope, SaboItem } from '../types';
+import { analyzeWithGemini, isGeminiAvailable } from './geminiService';
 
 /**
- * テキストからカテゴリを自動判定
+ * 入力テキストから完全なSaboItemを生成（Gemini優先）
  */
-export function classifyCategory(text: string): Category {
-  const lowerText = text.toLowerCase();
+export async function createSaboItem(rawText: string): Promise<Omit<SaboItem, 'id'>> {
+  console.log('🔍 createSaboItem 開始:', rawText);
 
-  // タスク系
-  if (
-    lowerText.includes('やりたい') ||
-    lowerText.includes('したい') ||
-    lowerText.includes('やらなきゃ') ||
-    lowerText.includes('しないと') ||
-    lowerText.includes('やる') ||
-    lowerText.includes('つくる') ||
-    lowerText.includes('作る')
-  ) {
-    return 'task';
+  // Gemini APIが利用可能な場合は優先的に使用
+  const geminiAvailable = isGeminiAvailable();
+  console.log('🤖 Gemini API 利用可能?', geminiAvailable);
+
+  if (geminiAvailable) {
+    try {
+      console.log('📡 Gemini API 呼び出し中...');
+      const aiResult = await analyzeWithGemini(rawText);
+      console.log('✅ Gemini API レスポンス:', aiResult);
+
+      if (aiResult) {
+        console.log('🎉 AI処理成功！カテゴリ:', aiResult.category, 'サマリー:', aiResult.summary);
+        return {
+          rawText,
+          createdAt: new Date().toISOString(),
+          category: aiResult.category,
+          status: 'todo',
+          summary: aiResult.summary,
+          scope: aiResult.scope,
+          detail: aiResult.detail,
+          tags: aiResult.tags,
+          aiProcessed: true,
+        };
+      } else {
+        console.warn('⚠️ AI結果がnull。ルールベースにフォールバック');
+      }
+    } catch (error) {
+      console.error('❌ Gemini API処理エラー。ルールベースにフォールバックします。', error);
+    }
   }
 
-  // アイデア系
+  // Gemini APIが使えない場合、またはエラー時はルールベース分類
+  console.log('📝 ルールベース分類を使用');
+  return createSaboItemRuleBased(rawText);
+}
+
+/**
+ * ルールベースでSaboItemを生成（フォールバック用）
+ */
+function createSaboItemRuleBased(rawText: string): Omit<SaboItem, 'id'> {
+  const category = classifyCategory(rawText);
+  const scope = classifyScope(rawText);
+  const summary = generateSummary(rawText, category);
+
+  return {
+    rawText,
+    createdAt: new Date().toISOString(),
+    category,
+    status: 'todo',
+    summary,
+    scope,
+    aiProcessed: false,
+  };
+}
+
+/**
+ * テキストからカテゴリを自動判定（ルールベース）
+ */
+function classifyCategory(text: string): Category {
+  const lowerText = text.toLowerCase();
+
+  // work系
+  if (
+    lowerText.includes('ブログ') ||
+    lowerText.includes('せどり') ||
+    lowerText.includes('経理') ||
+    lowerText.includes('編集') ||
+    lowerText.includes('作業') ||
+    lowerText.includes('仕事') ||
+    lowerText.includes('開発')
+  ) {
+    return 'work';
+  }
+
+  // idea系
   if (
     lowerText.includes('ひらめいた') ||
     lowerText.includes('アイデア') ||
     lowerText.includes('思いついた') ||
     lowerText.includes('考えた') ||
-    lowerText.includes('いいかも')
+    lowerText.includes('いいかも') ||
+    lowerText.includes('作りたい') ||
+    lowerText.includes('構想')
   ) {
     return 'idea';
   }
 
-  // 感情系
+  // emotion系
   if (
     lowerText.includes('疲れた') ||
     lowerText.includes('しんどい') ||
@@ -41,31 +111,49 @@ export function classifyCategory(text: string): Category {
     lowerText.includes('だるい') ||
     lowerText.includes('ムカつく') ||
     lowerText.includes('悲しい') ||
-    lowerText.includes('楽しい')
+    lowerText.includes('楽しい') ||
+    lowerText.includes('パンク') ||
+    lowerText.includes('落ち込')
   ) {
     return 'emotion';
   }
 
-  // 日常系
+  // life系
   if (
     lowerText.includes('買い物') ||
     lowerText.includes('掃除') ||
     lowerText.includes('ご飯') ||
     lowerText.includes('風呂') ||
     lowerText.includes('洗濯') ||
-    lowerText.includes('料理')
+    lowerText.includes('料理') ||
+    lowerText.includes('体調') ||
+    lowerText.includes('家事')
   ) {
     return 'life';
   }
 
-  // システム系
+  // mind系
+  if (
+    lowerText.includes('気づき') ||
+    lowerText.includes('書きたい') ||
+    lowerText.includes('学び') ||
+    lowerText.includes('振り返') ||
+    lowerText.includes('スピ') ||
+    lowerText.includes('内省')
+  ) {
+    return 'mind';
+  }
+
+  // system系
   if (
     lowerText.includes('os') ||
     lowerText.includes('仕様') ||
     lowerText.includes('設計') ||
     lowerText.includes('要件定義') ||
     lowerText.includes('プロンプト') ||
-    lowerText.includes('システム')
+    lowerText.includes('システム') ||
+    lowerText.includes('影分身') ||
+    lowerText.includes('タスク整理')
   ) {
     return 'system';
   }
@@ -74,9 +162,9 @@ export function classifyCategory(text: string): Category {
 }
 
 /**
- * テキストから時間範囲（scope）を自動判定
+ * テキストから時間範囲（scope）を自動判定（ルールベース）
  */
-export function classifyScope(text: string): Scope {
+function classifyScope(text: string): Scope {
   const lowerText = text.toLowerCase();
 
   // 今日系
@@ -103,10 +191,9 @@ export function classifyScope(text: string): Scope {
 }
 
 /**
- * テキストからサマリーを生成
- * v1.0: 簡易的な変換
+ * テキストからサマリーを生成（ルールベース）
  */
-export function generateSummary(text: string, category: Category): string {
+function generateSummary(text: string, category: Category): string {
   let summary = text.trim();
 
   // 長すぎる場合は短縮
@@ -115,42 +202,19 @@ export function generateSummary(text: string, category: Category): string {
   }
 
   // カテゴリに応じた語尾変換
-  if (category === 'task') {
-    // 「〜したい」→「〜する」のような変換
+  if (category === 'work' || category === 'idea') {
     summary = summary
       .replace(/したい$/,  '')
       .replace(/やりたい$/, '')
       .replace(/やらなきゃ$/, '')
       .replace(/しないと$/, '');
-
-    if (!summary.endsWith('する') && !summary.endsWith('作成') && !summary.endsWith('実装')) {
-      // 語尾がない場合は補完しない（元の文章を尊重）
-    }
   }
 
   if (category === 'idea') {
-    if (!summary.includes('アイデア')) {
+    if (!summary.includes('アイデア') && !summary.includes('構想')) {
       summary = summary + ' のアイデア';
     }
   }
 
-  return summary || text; // 空になったら元のテキストを返す
-}
-
-/**
- * 入力テキストから完全なSaboItemを生成
- */
-export function createSaboItem(rawText: string): Omit<SaboItem, 'id'> {
-  const category = classifyCategory(rawText);
-  const scope = classifyScope(rawText);
-  const summary = generateSummary(rawText, category);
-
-  return {
-    rawText,
-    createdAt: new Date().toISOString(),
-    category,
-    status: 'todo',
-    summary,
-    scope,
-  };
+  return summary || text;
 }

@@ -1,7 +1,7 @@
 // SABO OS 1.0 データ管理サービス
 // v1.0: localStorage（将来Firebase等に移行可能な設計）
 
-import { SaboItem } from '../types';
+import type { SaboItem } from '../types';
 
 const STORAGE_KEY = 'sabo_os_items';
 
@@ -56,11 +56,12 @@ export function deleteItem(id: string): void {
 
 /**
  * 今日やるタスクを1件取得（優先順位: today → this_week → someday）
+ * work, idea, mind カテゴリをタスクとして扱う
  */
 export function getTodayTask(): SaboItem | null {
   const items = getAllItems();
   const tasks = items.filter(
-    item => item.category === 'task' && item.status === 'todo'
+    item => (item.category === 'work' || item.category === 'idea' || item.category === 'mind') && item.status === 'todo'
   );
 
   // 優先順位順に探す
@@ -80,7 +81,20 @@ export function getTodayTask(): SaboItem | null {
  * タスクを完了にする
  */
 export function completeTask(id: string): void {
-  updateItem(id, { status: 'done' });
+  updateItem(id, {
+    status: 'done',
+    completedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * タスクを未完了に戻す
+ */
+export function uncompleteTask(id: string): void {
+  updateItem(id, {
+    status: 'todo',
+    completedAt: undefined,
+  });
 }
 
 /**
@@ -88,6 +102,13 @@ export function completeTask(id: string): void {
  */
 export function deferTask(id: string): void {
   updateItem(id, { scope: 'someday' });
+}
+
+/**
+ * タスクを今日やることに設定
+ */
+export function setTaskToToday(id: string): void {
+  updateItem(id, { scope: 'today' });
 }
 
 /**

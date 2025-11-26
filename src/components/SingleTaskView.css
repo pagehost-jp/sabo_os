@@ -22,12 +22,24 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.task-summary {
+/* メインタイトル = summary（Gemini API でも同じ設計） */
+.task-main-title {
   font-size: 1.8rem;
+  font-weight: 600;
   color: white;
   text-align: center;
   margin-bottom: 1rem;
   line-height: 1.4;
+}
+
+/* サブテキスト = rawText（元の入力文） */
+.task-raw-text {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  font-style: italic;
 }
 
 .task-scope {

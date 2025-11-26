@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getTodayTask, completeTask, deferTask } from '../services/dataService';
-import { SaboItem } from '../types';
+import type { SaboItem } from '../types';
 import './SingleTaskView.css';
 
 interface SingleTaskViewProps {
@@ -55,7 +55,12 @@ export default function SingleTaskView({ onUpdate }: SingleTaskViewProps) {
       <h2 className="task-title">今日やること</h2>
 
       <div className="task-card">
-        <div className="task-summary">📝 {task.summary}</div>
+        {/* メインタイトル = summary（Gemini API 連携後もこの設計を維持） */}
+        <div className="task-main-title">📝 {task.summary}</div>
+
+        {/* サブテキスト = rawText（元の入力文） */}
+        <div className="task-raw-text">{task.rawText}</div>
+
         <div className="task-scope">
           {task.scope === 'today' && '📅 今日'}
           {task.scope === 'this_week' && '📆 今週'}
