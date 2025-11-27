@@ -9,7 +9,7 @@ type FilterType = 'all' | 'tasks' | 'done';
 
 export default function ListView() {
   const [items, setItems] = useState<SaboItem[]>([]);
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>('tasks');
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const [swipeItemId, setSwipeItemId] = useState<string | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
