@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import type { User } from 'firebase/auth';
 import CaptureView from './components/CaptureView';
-import SingleTaskView from './components/SingleTaskView';
 import ListView from './components/ListView';
 import ReviewView from './components/ReviewView';
 import LoginView from './components/LoginView';
@@ -11,12 +10,12 @@ import { onAuthChange, signOut as firebaseSignOut } from './services/authService
 import { enableSync, disableSync, syncWithCloud } from './services/dataService';
 import './App.css';
 
-type ViewType = 'task' | 'capture' | 'list' | 'review';
+type ViewType = 'capture' | 'list' | 'review';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<ViewType>('task');
+  const [currentView, setCurrentView] = useState<ViewType>('list');
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -107,22 +106,16 @@ function App() {
 
         <nav className="app-nav">
           <button
-            className={`nav-btn ${currentView === 'task' ? 'active' : ''}`}
-            onClick={() => setCurrentView('task')}
+            className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
+            onClick={() => setCurrentView('list')}
           >
-            📝 今日やること
+            📂 リスト
           </button>
           <button
             className={`nav-btn ${currentView === 'capture' ? 'active' : ''}`}
             onClick={() => setCurrentView('capture')}
           >
             ➕ 入力
-          </button>
-          <button
-            className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
-            onClick={() => setCurrentView('list')}
-          >
-            📂 リスト
           </button>
           <button
             className={`nav-btn ${currentView === 'review' ? 'active' : ''}`}
@@ -133,9 +126,8 @@ function App() {
         </nav>
 
         <main className="app-main" key={updateTrigger}>
-          {currentView === 'task' && <SingleTaskView onUpdate={handleDataUpdate} />}
-          {currentView === 'capture' && <CaptureView onSave={handleDataUpdate} />}
           {currentView === 'list' && <ListView />}
+          {currentView === 'capture' && <CaptureView onSave={handleDataUpdate} />}
           {currentView === 'review' && <ReviewView />}
         </main>
 
