@@ -108,7 +108,8 @@
 }
 
 .btn-delete,
-.btn-uncomplete {
+.btn-uncomplete,
+.btn-complete {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -119,7 +120,8 @@
 }
 
 .btn-delete:hover,
-.btn-uncomplete:hover {
+.btn-uncomplete:hover,
+.btn-complete:hover {
   opacity: 1;
   transform: scale(1.1);
 }

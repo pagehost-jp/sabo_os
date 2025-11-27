@@ -1,7 +1,7 @@
 // SABO OS 1.0 リスト画面（管理・振り返り用）
 
 import { useState, useEffect } from 'react';
-import { getAllItems, deleteItem, uncompleteTask, setTaskToToday } from '../services/dataService';
+import { getAllItems, deleteItem, uncompleteTask, completeTask, setTaskToToday } from '../services/dataService';
 import type { SaboItem } from '../types';
 import './ListView.css';
 
@@ -30,13 +30,18 @@ export default function ListView() {
     }
   };
 
-  const handleUncomplete = (id: string) => {
-    uncompleteTask(id);
+  const handleUncomplete = async (id: string) => {
+    await uncompleteTask(id);
     loadItems();
   };
 
-  const handleSetToToday = (id: string) => {
-    setTaskToToday(id);
+  const handleComplete = async (id: string) => {
+    await completeTask(id);
+    loadItems();
+  };
+
+  const handleSetToToday = async (id: string) => {
+    await setTaskToToday(id);
     loadItems();
   };
 
@@ -181,6 +186,15 @@ export default function ListView() {
                   <span className="item-status">
                     {item.status === 'done' ? '✓' : '□'}
                   </span>
+                  {item.status === 'todo' && (
+                    <button
+                      className="btn-complete"
+                      onClick={() => handleComplete(item.id)}
+                      title="完了"
+                    >
+                      ✅
+                    </button>
+                  )}
                   {item.status === 'done' && (
                     <button
                       className="btn-uncomplete"
