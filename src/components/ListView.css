@@ -11,6 +11,46 @@
   color: #333;
 }
 
+/* 検索ボックス */
+.search-box {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.8rem 2.5rem 0.8rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.search-clear-btn:hover {
+  color: #333;
+}
+
 .filter-buttons {
   display: flex;
   gap: 0.5rem;
@@ -103,27 +143,65 @@
   border-radius: 4px;
 }
 
-.item-status {
-  font-size: 1.2rem;
+.btn-complete-action {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
 }
 
-.btn-delete,
-.btn-uncomplete,
-.btn-complete {
+.btn-complete-action:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(76, 175, 80, 0.3);
+}
+
+.btn-uncomplete-action {
+  background: #e0e0e0;
+  color: #666;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-uncomplete-action:hover {
+  background: #d0d0d0;
+}
+
+.btn-delete {
   background: none;
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: all 0.2s;
 }
 
-.btn-delete:hover,
-.btn-uncomplete:hover,
-.btn-complete:hover {
-  opacity: 1;
+.btn-delete:hover {
+  opacity: 0.8;
   transform: scale(1.1);
+}
+
+.btn-delete.long-pressing {
+  animation: pulse 1s;
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: 50%;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 /* タイトル = summary（Gemini API でも同じ設計） */
@@ -202,4 +280,73 @@
 .empty-list p:first-child {
   font-size: 3rem;
   margin-bottom: 1rem;
+}
+
+/* 選択モード */
+.item-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.item-checkbox {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+}
+
+.item-card.selected {
+  background: #e3f2fd;
+  border-color: #2196f3;
+}
+
+/* 選択モード時の操作ボタン */
+.selection-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.btn-cancel-selection,
+.btn-delete-selected {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel-selection {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-cancel-selection:hover {
+  background: #d0d0d0;
+}
+
+.btn-delete-selected {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete-selected:hover:not(:disabled) {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
+
+.btn-delete-selected:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
 }

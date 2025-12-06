@@ -5,12 +5,13 @@ import type { User } from 'firebase/auth';
 import CaptureView from './components/CaptureView';
 import ListView from './components/ListView';
 import ReviewView from './components/ReviewView';
+import SettingsView from './components/SettingsView';
 import LoginView from './components/LoginView';
 import { onAuthChange, signOut as firebaseSignOut } from './services/authService';
 import { enableSync, disableSync, syncWithCloud } from './services/dataService';
 import './App.css';
 
-type ViewType = 'capture' | 'list' | 'review';
+type ViewType = 'list' | 'capture' | 'review' | 'settings';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +42,7 @@ function App() {
 
   const handleDataUpdate = () => {
     setUpdateTrigger(prev => prev + 1);
+    setCurrentView('list'); // 入力後はリストに戻る
   };
 
   const handleLogout = async () => {
@@ -84,23 +86,32 @@ function App() {
               <h1 className="app-title">SABO OS 1.2</h1>
               <p className="app-subtitle">思いついたことを、ただ投げるだけ</p>
             </div>
-            {user ? (
-              <div className="user-info">
-                <img
-                  src={user.photoURL || 'https://via.placeholder.com/40'}
-                  alt={user.displayName || 'User'}
-                  className="user-avatar"
-                />
-                <span className="user-name">{user.displayName}</span>
-                <button className="logout-btn" onClick={handleLogout}>
-                  ログアウト
-                </button>
-              </div>
-            ) : (
-              <button className="login-btn" onClick={() => setShowLoginModal(true)}>
-                ログイン
+            <div className="header-actions">
+              <button
+                className="settings-btn"
+                onClick={() => setCurrentView('settings')}
+                title="設定"
+              >
+                ⚙️
               </button>
-            )}
+              {user ? (
+                <div className="user-info">
+                  <img
+                    src={user.photoURL || 'https://via.placeholder.com/40'}
+                    alt={user.displayName || 'User'}
+                    className="user-avatar"
+                  />
+                  <span className="user-name">{user.displayName}</span>
+                  <button className="logout-btn" onClick={handleLogout}>
+                    ログアウト
+                  </button>
+                </div>
+              ) : (
+                <button className="login-btn" onClick={() => setShowLoginModal(true)}>
+                  ログイン
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -129,6 +140,7 @@ function App() {
           {currentView === 'list' && <ListView />}
           {currentView === 'capture' && <CaptureView onSave={handleDataUpdate} />}
           {currentView === 'review' && <ReviewView />}
+          {currentView === 'settings' && <SettingsView />}
         </main>
 
         <footer className="app-footer">

@@ -10,9 +10,13 @@ type FilterType = 'all' | 'tasks' | 'done';
 export default function ListView() {
   const [items, setItems] = useState<SaboItem[]>([]);
   const [filter, setFilter] = useState<FilterType>('tasks');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const [swipeItemId, setSwipeItemId] = useState<string | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadItems();
@@ -23,11 +27,45 @@ export default function ListView() {
     setItems(allItems);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('このアイテムを削除しますか？')) {
-      deleteItem(id);
+  const handleCardLongPress = () => {
+    const timer = setTimeout(() => {
+      setIsSelectionMode(true);
+      setLongPressTimer(null);
+    }, 500); // 0.5秒長押しで選択モード
+    setLongPressTimer(timer);
+  };
+
+  const handleCardLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const toggleItemSelection = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedItems.size === 0) return;
+
+    if (window.confirm(`${selectedItems.size}件のアイテムを削除しますか？`)) {
+      selectedItems.forEach(id => deleteItem(id));
+      setSelectedItems(new Set());
+      setIsSelectionMode(false);
       loadItems();
     }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedItems(new Set());
+    setIsSelectionMode(false);
   };
 
   const handleUncomplete = async (id: string) => {
@@ -86,7 +124,8 @@ export default function ListView() {
     switch (filter) {
       case 'tasks':
         filtered = items.filter(item =>
-          item.category === 'work' || item.category === 'idea' || item.category === 'mind'
+          (item.category === 'work' || item.category === 'idea' || item.category === 'mind') &&
+          item.status === 'todo'
         );
         break;
       case 'done':
@@ -94,6 +133,15 @@ export default function ListView() {
         break;
       default:
         filtered = items;
+    }
+
+    // 検索クエリでフィルタリング
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.summary.toLowerCase().includes(query) ||
+        item.rawText.toLowerCase().includes(query)
+      );
     }
 
     // 最新が一番上に来るように降順ソート
@@ -120,6 +168,26 @@ export default function ListView() {
     <div className="list-view">
       <h2 className="list-title">📂 すべてのアイテム</h2>
 
+      {/* 検索ボックス */}
+      <div className="search-box">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="🔍 検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button
+            className="search-clear-btn"
+            onClick={() => setSearchQuery('')}
+            title="クリア"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       <div className="filter-buttons">
         <button
           className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
@@ -131,7 +199,7 @@ export default function ListView() {
           className={`filter-btn ${filter === 'tasks' ? 'active' : ''}`}
           onClick={() => setFilter('tasks')}
         >
-          タスク ({items.filter(i => i.category === 'work' || i.category === 'idea' || i.category === 'mind').length})
+          タスク ({items.filter(i => (i.category === 'work' || i.category === 'idea' || i.category === 'mind') && i.status === 'todo').length})
         </button>
         <button
           className={`filter-btn ${filter === 'done' ? 'active' : ''}`}
@@ -169,48 +237,51 @@ export default function ListView() {
                 </div>
               )}
               <div
-                className="item-card"
+                className={`item-card ${isSelectionMode && selectedItems.has(item.id) ? 'selected' : ''}`}
                 style={{
                   transform: `translateX(-${offset}px)`,
                   transition: isCurrentSwipe ? 'none' : 'transform 0.3s ease',
                 }}
-                onTouchStart={(e) => isSwipeable && handleTouchStart(e, item.id)}
-                onTouchMove={(e) => isSwipeable && handleTouchMove(e)}
-                onTouchEnd={() => isSwipeable && handleTouchEnd(item)}
+                onMouseDown={handleCardLongPress}
+                onMouseUp={handleCardLongPressEnd}
+                onMouseLeave={handleCardLongPressEnd}
+                onTouchStart={handleCardLongPress}
+                onTouchEnd={handleCardLongPressEnd}
+                onTouchCancel={handleCardLongPressEnd}
+                onClick={() => isSelectionMode && toggleItemSelection(item.id)}
               >
               <div className="item-header">
-                <span className="item-category">
-                  {getCategoryEmoji(item.category)} {item.category}
-                </span>
-                <div className="item-header-right">
-                  <span className="item-status">
-                    {item.status === 'done' ? '✓' : '□'}
+                <div className="item-header-left">
+                  {isSelectionMode && (
+                    <input
+                      type="checkbox"
+                      className="item-checkbox"
+                      checked={selectedItems.has(item.id)}
+                      onChange={() => toggleItemSelection(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+                  <span className="item-category">
+                    {getCategoryEmoji(item.category)} {item.category}
                   </span>
-                  {item.status === 'todo' && (
+                </div>
+                <div className="item-header-right">
+                  {!isSelectionMode && item.status === 'todo' && (
                     <button
-                      className="btn-complete"
+                      className="btn-complete-action"
                       onClick={() => handleComplete(item.id)}
-                      title="完了"
                     >
-                      ✅
+                      完了
                     </button>
                   )}
-                  {item.status === 'done' && (
+                  {!isSelectionMode && item.status === 'done' && (
                     <button
-                      className="btn-uncomplete"
+                      className="btn-uncomplete-action"
                       onClick={() => handleUncomplete(item.id)}
-                      title="未完了に戻す"
                     >
-                      ↩️
+                      ✓ 完了済み
                     </button>
                   )}
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDelete(item.id)}
-                    title="削除"
-                  >
-                    🗑️
-                  </button>
                 </div>
               </div>
               {/* タイトル = summary（Gemini API 連携後もこの設計を維持） */}
@@ -218,19 +289,6 @@ export default function ListView() {
               {/* サブテキスト = rawText（元の入力文） */}
               <div className="item-raw-text">{item.rawText}</div>
               <div className="item-footer">
-                <div className="item-footer-left">
-                  <span className="item-scope">{item.scope}</span>
-                  {item.status === 'todo' &&
-                   (item.category === 'work' || item.category === 'idea' || item.category === 'mind') &&
-                   item.scope !== 'today' && (
-                    <button
-                      className="btn-set-today"
-                      onClick={() => handleSetToToday(item.id)}
-                    >
-                      📅 今日やる
-                    </button>
-                  )}
-                </div>
                 <div className="item-dates">
                   <span className="item-date">📝 {formatDateTime(item.createdAt)}</span>
                   {item.completedAt && (
@@ -244,6 +302,22 @@ export default function ListView() {
           })
         )}
       </div>
+
+      {/* 選択モード時の操作ボタン */}
+      {isSelectionMode && (
+        <div className="selection-actions">
+          <button className="btn-cancel-selection" onClick={handleCancelSelection}>
+            キャンセル
+          </button>
+          <button
+            className="btn-delete-selected"
+            onClick={handleDeleteSelected}
+            disabled={selectedItems.size === 0}
+          >
+            削除 ({selectedItems.size})
+          </button>
+        </div>
+      )}
     </div>
   );
 }
