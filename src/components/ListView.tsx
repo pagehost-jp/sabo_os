@@ -190,22 +190,10 @@ export default function ListView() {
 
       <div className="filter-buttons">
         <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          すべて ({items.length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'tasks' ? 'active' : ''}`}
-          onClick={() => setFilter('tasks')}
+          className={`filter-btn active`}
+          disabled
         >
           タスク ({items.filter(i => (i.category === 'work' || i.category === 'idea' || i.category === 'mind') && i.status === 'todo').length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'done' ? 'active' : ''}`}
-          onClick={() => setFilter('done')}
-        >
-          完了 ({items.filter(i => i.status === 'done').length})
         </button>
       </div>
 
@@ -269,7 +257,10 @@ export default function ListView() {
                   {!isSelectionMode && item.status === 'todo' && (
                     <button
                       className="btn-complete-action"
-                      onClick={() => handleComplete(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleComplete(item.id);
+                      }}
                     >
                       完了
                     </button>
@@ -277,7 +268,10 @@ export default function ListView() {
                   {!isSelectionMode && item.status === 'done' && (
                     <button
                       className="btn-uncomplete-action"
-                      onClick={() => handleUncomplete(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUncomplete(item.id);
+                      }}
                     >
                       ✓ 完了済み
                     </button>
