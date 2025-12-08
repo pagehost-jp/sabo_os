@@ -211,6 +211,8 @@
   margin-bottom: 0.5rem;
   color: #222;
   line-height: 1.4;
+  user-select: text; /* PCでテキストコピー可能に */
+  cursor: text;
 }
 
 /* サブテキスト = rawText（元の入力文） */
@@ -221,6 +223,8 @@
   padding-left: 0.75rem;
   border-left: 3px solid #e0e0e0;
   line-height: 1.5;
+  user-select: text; /* PCでテキストコピー可能に */
+  cursor: text;
 }
 
 .item-footer {
