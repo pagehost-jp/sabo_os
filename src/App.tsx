@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react';
 import type { User } from 'firebase/auth';
 import CaptureView from './components/CaptureView';
 import ListView from './components/ListView';
-import ReviewView from './components/ReviewView';
 import SettingsView from './components/SettingsView';
 import LoginView from './components/LoginView';
 import { onAuthChange, signOut as firebaseSignOut } from './services/authService';
 import { enableSync, disableSync, syncWithCloud } from './services/dataService';
 import './App.css';
 
-type ViewType = 'list' | 'capture' | 'review' | 'settings';
+type ViewType = 'list' | 'capture' | 'settings';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -128,18 +127,11 @@ function App() {
           >
             ➕ 入力
           </button>
-          <button
-            className={`nav-btn ${currentView === 'review' ? 'active' : ''}`}
-            onClick={() => setCurrentView('review')}
-          >
-            🌅 今日を振り返る
-          </button>
         </nav>
 
         <main className="app-main" key={updateTrigger}>
           {currentView === 'list' && <ListView />}
           {currentView === 'capture' && <CaptureView onSave={handleDataUpdate} />}
-          {currentView === 'review' && <ReviewView />}
           {currentView === 'settings' && <SettingsView />}
         </main>
 

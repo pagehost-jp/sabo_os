@@ -5,11 +5,8 @@ import { getAllItems, deleteItem, uncompleteTask, completeTask } from '../servic
 import type { SaboItem } from '../types';
 import './ListView.css';
 
-type FilterType = 'all' | 'tasks' | 'done';
-
 export default function ListView() {
   const [items, setItems] = useState<SaboItem[]>([]);
-  const [filter, setFilter] = useState<FilterType>('tasks');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -77,21 +74,7 @@ export default function ListView() {
   };
 
   const getFilteredItems = (): SaboItem[] => {
-    let filtered: SaboItem[];
-
-    switch (filter) {
-      case 'tasks':
-        filtered = items.filter(item =>
-          (item.category === 'work' || item.category === 'idea' || item.category === 'mind') &&
-          item.status === 'todo'
-        );
-        break;
-      case 'done':
-        filtered = items.filter(item => item.status === 'done');
-        break;
-      default:
-        filtered = items;
-    }
+    let filtered = items;
 
     // 検索クエリでフィルタリング
     if (searchQuery.trim()) {
