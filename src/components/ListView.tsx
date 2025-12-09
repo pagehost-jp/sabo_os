@@ -1,7 +1,7 @@
 // SABO OS 1.0 リスト画面（管理・振り返り用）
 
 import { useState, useEffect } from 'react';
-import { getAllItems, deleteItem, uncompleteTask, completeTask, setTaskToToday } from '../services/dataService';
+import { getAllItems, deleteItem, uncompleteTask, completeTask } from '../services/dataService';
 import type { SaboItem } from '../types';
 import './ListView.css';
 
@@ -11,9 +11,6 @@ export default function ListView() {
   const [items, setItems] = useState<SaboItem[]>([]);
   const [filter, setFilter] = useState<FilterType>('tasks');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
-  const [swipeItemId, setSwipeItemId] = useState<string | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -70,11 +67,6 @@ export default function ListView() {
     loadItems();
   };
 
-  const handleSetToToday = async (id: string) => {
-    await setTaskToToday(id);
-    loadItems();
-  };
-
   const formatDateTime = (isoString: string): string => {
     const date = new Date(isoString);
     const month = date.getMonth() + 1;
@@ -82,32 +74,6 @@ export default function ListView() {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${month}/${day} ${hours}:${minutes}`;
-  };
-
-  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
-    setSwipeStartX(e.touches[0].clientX);
-    setSwipeItemId(itemId);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (swipeStartX === null) return;
-    const currentX = e.touches[0].clientX;
-    const diff = swipeStartX - currentX;
-    setSwipeOffset(Math.max(0, Math.min(diff, 200)));
-  };
-
-  const handleTouchEnd = (item: SaboItem) => {
-    if (swipeOffset > 100) {
-      // 左スワイプ（100px以上）
-      if (item.status === 'todo' &&
-          (item.category === 'work' || item.category === 'idea' || item.category === 'mind') &&
-          item.scope !== 'today') {
-        handleSetToToday(item.id);
-      }
-    }
-    setSwipeStartX(null);
-    setSwipeItemId(null);
-    setSwipeOffset(0);
   };
 
   const getFilteredItems = (): SaboItem[] => {
@@ -196,32 +162,10 @@ export default function ListView() {
             <p>アイテムがありません</p>
           </div>
         ) : (
-          filteredItems.map(item => {
-            const isSwipeable = item.status === 'todo' &&
-              (item.category === 'work' || item.category === 'idea' || item.category === 'mind') &&
-              item.scope !== 'today';
-            const isCurrentSwipe = swipeItemId === item.id;
-            const offset = isCurrentSwipe ? swipeOffset : 0;
-
-            return (
+          filteredItems.map(item => (
             <div key={item.id} className="item-card-wrapper">
-              {isSwipeable && (
-                <div
-                  className="swipe-action"
-                  style={{
-                    width: `${offset}px`,
-                    opacity: offset > 50 ? 1 : offset / 50,
-                  }}
-                >
-                  📅 今日やる
-                </div>
-              )}
               <div
                 className={`item-card ${isSelectionMode && selectedItems.has(item.id) ? 'selected' : ''}`}
-                style={{
-                  transform: `translateX(-${offset}px)`,
-                  transition: isCurrentSwipe ? 'none' : 'transform 0.3s ease',
-                }}
                 onClick={() => isSelectionMode && toggleItemSelection(item.id)}
               >
               <div className="item-header">
@@ -269,6 +213,7 @@ export default function ListView() {
                 className="item-title"
                 onMouseDown={(e) => e.stopPropagation()}
                 onMouseUp={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 {item.summary}
               </div>
@@ -277,6 +222,7 @@ export default function ListView() {
                 className="item-raw-text"
                 onMouseDown={(e) => e.stopPropagation()}
                 onMouseUp={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 {item.rawText}
               </div>
@@ -290,8 +236,7 @@ export default function ListView() {
               </div>
             </div>
             </div>
-            );
-          })
+          ))
         )}
       </div>
 

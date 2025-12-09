@@ -87,23 +87,7 @@
 
 .item-card-wrapper {
   position: relative;
-  overflow: hidden;
   border-radius: 8px;
-}
-
-.swipe-action {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: #4CAF50;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9rem;
-  padding: 0 1rem;
 }
 
 .item-card {
@@ -112,9 +96,6 @@
   border-radius: 8px;
   padding: 1rem;
   position: relative;
-  z-index: 1;
-  touch-action: pan-y;
-  user-select: none;
 }
 
 .item-card:hover {
@@ -226,34 +207,6 @@
   align-items: flex-end;
   font-size: 0.8rem;
   color: #999;
-}
-
-.item-footer-left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.item-scope {
-  background: #f0f0f0;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-}
-
-.btn-set-today {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-set-today:hover {
-  background: #45a049;
-  transform: translateY(-1px);
 }
 
 .item-dates {
