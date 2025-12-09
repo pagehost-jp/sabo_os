@@ -16,7 +16,6 @@ export default function ListView() {
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadItems();
@@ -27,19 +26,12 @@ export default function ListView() {
     setItems(allItems);
   };
 
-  const handleCardLongPress = () => {
-    const timer = setTimeout(() => {
-      setIsSelectionMode(true);
-      setLongPressTimer(null);
-    }, 500); // 0.5秒長押しで選択モード
-    setLongPressTimer(timer);
-  };
-
-  const handleCardLongPressEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+  const toggleSelectionMode = () => {
+    if (isSelectionMode) {
+      // 選択モード終了時に選択をクリア
+      setSelectedItems(new Set());
     }
+    setIsSelectionMode(!isSelectionMode);
   };
 
   const toggleItemSelection = (id: string) => {
@@ -188,12 +180,12 @@ export default function ListView() {
         )}
       </div>
 
-      <div className="filter-buttons">
+      <div className="selection-toggle">
         <button
-          className={`filter-btn active`}
-          disabled
+          className={`btn-selection-toggle ${isSelectionMode ? 'active' : ''}`}
+          onClick={toggleSelectionMode}
         >
-          タスク ({items.filter(i => (i.category === 'work' || i.category === 'idea' || i.category === 'mind') && i.status === 'todo').length})
+          {isSelectionMode ? '✓ 選択中' : '選択'}
         </button>
       </div>
 
@@ -230,12 +222,6 @@ export default function ListView() {
                   transform: `translateX(-${offset}px)`,
                   transition: isCurrentSwipe ? 'none' : 'transform 0.3s ease',
                 }}
-                onMouseDown={handleCardLongPress}
-                onMouseUp={handleCardLongPressEnd}
-                onMouseLeave={handleCardLongPressEnd}
-                onTouchStart={handleCardLongPress}
-                onTouchEnd={handleCardLongPressEnd}
-                onTouchCancel={handleCardLongPressEnd}
                 onClick={() => isSelectionMode && toggleItemSelection(item.id)}
               >
               <div className="item-header">
@@ -279,9 +265,21 @@ export default function ListView() {
                 </div>
               </div>
               {/* タイトル = summary（Gemini API 連携後もこの設計を維持） */}
-              <div className="item-title">{item.summary}</div>
+              <div
+                className="item-title"
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+              >
+                {item.summary}
+              </div>
               {/* サブテキスト = rawText（元の入力文） */}
-              <div className="item-raw-text">{item.rawText}</div>
+              <div
+                className="item-raw-text"
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+              >
+                {item.rawText}
+              </div>
               <div className="item-footer">
                 <div className="item-dates">
                   <span className="item-date">📝 {formatDateTime(item.createdAt)}</span>

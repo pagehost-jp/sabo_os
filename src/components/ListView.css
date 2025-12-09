@@ -51,30 +51,29 @@
   color: #333;
 }
 
-.filter-buttons {
+.selection-toggle {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
 }
 
-.filter-btn {
-  flex: 1;
-  min-width: 100px;
-  padding: 0.8rem;
+.btn-selection-toggle {
+  padding: 0.6rem 1.5rem;
   border: 2px solid #e0e0e0;
   background: white;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
-.filter-btn:hover {
+.btn-selection-toggle:hover {
   border-color: #4CAF50;
+  background: #f9f9f9;
 }
 
-.filter-btn.active {
+.btn-selection-toggle.active {
   background-color: #4CAF50;
   color: white;
   border-color: #4CAF50;
@@ -192,18 +191,6 @@
   transform: scale(1.1);
 }
 
-.btn-delete.long-pressing {
-  animation: pulse 1s;
-  background: rgba(244, 67, 54, 0.1);
-  border-radius: 50%;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
 /* タイトル = summary（Gemini API でも同じ設計） */
 .item-title {
   font-size: 1.2rem;
@@ -211,7 +198,10 @@
   margin-bottom: 0.5rem;
   color: #222;
   line-height: 1.4;
-  user-select: text; /* PCでテキストコピー可能に */
+  user-select: text !important; /* PCでテキストコピー可能に */
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
   cursor: text;
 }
 
@@ -223,7 +213,10 @@
   padding-left: 0.75rem;
   border-left: 3px solid #e0e0e0;
   line-height: 1.5;
-  user-select: text; /* PCでテキストコピー可能に */
+  user-select: text !important; /* PCでテキストコピー可能に */
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
   cursor: text;
 }
 
